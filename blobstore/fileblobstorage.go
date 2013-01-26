@@ -2,8 +2,10 @@ package blobstore
 
 // TODO: Error handling
 
-import "io"
-import "os"
+import (
+	"io"
+	"os"
+)
 
 func NewFileBlobStorage(path string) BlobStorage {
 	os.MkdirAll(path, 0777)
