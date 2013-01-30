@@ -73,11 +73,9 @@ func (d *DirBlobWriter) finalizeSimple() (bid string, key string, err error) {
 	}
 
 	// Create blob out of the data
-	bid, key, err = createHashValidatedBlobFromReaderGenerator(func() io.Reader {
-		return bytes.NewReader(buffer.Bytes())
-	}, d.Storage)
-
-	return
+	return createHashValidatedBlobFromReaderGenerator(
+		func() io.Reader { return bytes.NewReader(buffer.Bytes()) },
+		d.Storage)
 }
 
 func (d *DirBlobWriter) finalizeSplit() (bid string, key string, err error) {
