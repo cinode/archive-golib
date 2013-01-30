@@ -39,7 +39,7 @@ func (f *FileBlobWriter) Write(p []byte) (n int, err error) {
 		// Check out if we should emit next partial buffer
 		if bufferSpaceLeft <= 0 {
 			if err := f.finalizePartialBuffer(); err != nil {
-				// TODO: Cleanup
+				f.cleanup()
 				return 0, err
 			}
 			bufferSpaceLeft = maxSimpleFileDataSize
@@ -85,7 +85,7 @@ func (f *FileBlobWriter) Finalize() (bid string, key string, err error) {
 	// Throw out the last partial if needed
 	if f.buffer.Len() > 0 || len(f.partialBids) == 0 {
 		if err := f.finalizePartialBuffer(); err != nil {
-			// TODO: Cleanup
+			f.cleanup()
 			return "", "", err
 		}
 	}
@@ -98,4 +98,8 @@ func (f *FileBlobWriter) Finalize() (bid string, key string, err error) {
 
 	// Create split file blob
 	panic("Unimplemented")
+}
+
+func (f *FileBlobWriter) cleanup() {
+	// TODO: Remove all blobs generated so far
 }
