@@ -9,8 +9,6 @@ import (
 	"io"
 )
 
-const validationMethodHash = 0x01
-
 func createBlobFromReaderGenerator(readerGenerator func() io.Reader, storage BlobStorage) (bid string, key string, err error) {
 
 	// Generate the key

@@ -5,9 +5,6 @@ import (
 	"io"
 )
 
-const blobTypeSimpleStaticFile = 0x01
-
-const maxSingleBufferSize = 16 * 1024 * 1024
 
 type FileBlobWriter struct {
 
