@@ -19,3 +19,9 @@ func serializeInt(v int64, buff *bytes.Buffer) {
 		}
 	}
 }
+
+func serializeString(s string, buff *bytes.Buffer) {
+	data := []byte(s)
+	serializeInt(int64(len(data)),buff)
+	buff.Write(data)
+}
