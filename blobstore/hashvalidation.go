@@ -15,7 +15,7 @@ func createHashValidatedBlobFromReaderGenerator(readerGenerator func() io.Reader
 	hasher := sha512.New()
 	io.Copy(hasher, readerGenerator())
 	keyRaw := hasher.Sum(nil)[:32]
-	key = "AES:" + hex.EncodeToString(keyRaw)
+	key = cipherAES256Hex + hex.EncodeToString(keyRaw)
 
 	// Generate the encrypted content
 	encryptedBuffer := bytes.Buffer{}
