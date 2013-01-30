@@ -5,7 +5,6 @@ import (
 	"io"
 )
 
-
 type FileBlobWriter struct {
 
 	// Buffer for storing data before we can hash it
@@ -86,6 +85,7 @@ func (f *FileBlobWriter) Finalize() (bid string, key string, err error) {
 	// Throw out the last partial if needed
 	if f.buffer.Len() > 0 || len(f.partialBids) == 0 {
 		if err := f.finalizePartialBuffer(); err != nil {
+			// TODO: Cleanup
 			return "", "", err
 		}
 	}
