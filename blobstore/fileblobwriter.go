@@ -15,6 +15,9 @@ type FileBlobWriter struct {
 
 	// List of partial file blobs
 	partialBids, partialKeys []string
+
+	// Overall number of bytes written so far
+	totalBytes int64
 }
 
 // Performing a write operation on the file blob
@@ -69,6 +72,9 @@ func (f *FileBlobWriter) finalizePartialBuffer() error {
 	// Queue the blob on a list of partial blobs
 	f.addPartialBlob(bid, key)
 
+	// Increase the counter of bytes thrown out so far
+	f.totalBytes += int64(f.buffer.Len())
+
 	// Cleanup
 	f.buffer.Reset()
 
@@ -97,7 +103,30 @@ func (f *FileBlobWriter) Finalize() (bid string, key string, err error) {
 	}
 
 	// Create split file blob
-	panic("Unimplemented")
+	return f.finalizeSplitFile()
+}
+
+func (f *FileBlobWriter) finalizeSplitFile() (bid string, key string, err error) {
+	var b bytes.Buffer
+
+	// Blob type id
+	b.WriteByte(blobTypeSplitStaticFile)
+
+	// Total file size
+	serializeInt(f.totalBytes, &b)
+
+	// Number of partial blobs
+	serializeInt(int64(len(f.partialBids)), &b)
+
+	// Partial blobs list
+	for i, bid := range f.partialBids {
+		serializeString(bid, &b)
+		serializeString(f.partialKeys[i], &b)
+	}
+
+	return createHashValidatedBlobFromReaderGenerator(
+		func() io.Reader { return bytes.NewReader(b.Bytes()) },
+		f.Storage)
 }
 
 func (f *FileBlobWriter) cleanup() {
