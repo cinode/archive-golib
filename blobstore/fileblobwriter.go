@@ -62,7 +62,7 @@ func (f *FileBlobWriter) finalizePartialBuffer() error {
 		contentReader := bytes.NewReader(f.buffer.Bytes())
 		return io.MultiReader(headerReader, contentReader)
 	}
-	bid, key, err := createBlobFromReaderGenerator(readerGen, f.Storage)
+	bid, key, err := createHashValidatedBlobFromReaderGenerator(readerGen, f.Storage)
 	if err != nil {
 		return err
 	}

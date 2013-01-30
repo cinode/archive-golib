@@ -9,7 +9,7 @@ import (
 	"io"
 )
 
-func createBlobFromReaderGenerator(readerGenerator func() io.Reader, storage BlobStorage) (bid string, key string, err error) {
+func createHashValidatedBlobFromReaderGenerator(readerGenerator func() io.Reader, storage BlobStorage) (bid string, key string, err error) {
 
 	// Generate the key
 	hasher := sha512.New()
