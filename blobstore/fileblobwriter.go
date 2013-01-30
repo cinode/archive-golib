@@ -20,14 +20,14 @@ type FileBlobWriter struct {
 // Performing a write operation on the file blob
 func (f *FileBlobWriter) Write(p []byte) (n int, err error) {
 
-	bufferSpaceLeft := maxSingleBufferSize - f.buffer.Len()
+	bufferSpaceLeft := maxSimpleFileDataSize - f.buffer.Len()
 	written := 0
 	for len(p) > 0 {
 
 		// Let's see how much can we chop this time
 		partialSize := len(p)
-		if partialSize > maxSingleBufferSize {
-			partialSize = maxSingleBufferSize
+		if partialSize > bufferSpaceLeft {
+			partialSize = bufferSpaceLeft
 		}
 
 		// Chop off the next part
@@ -42,7 +42,7 @@ func (f *FileBlobWriter) Write(p []byte) (n int, err error) {
 				// TODO: Cleanup
 				return 0, err
 			}
-			bufferSpaceLeft = maxSingleBufferSize
+			bufferSpaceLeft = maxSimpleFileDataSize
 		}
 	}
 	return written, nil
