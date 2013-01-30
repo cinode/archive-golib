@@ -84,7 +84,7 @@ func (f *FileBlobWriter) addPartialBlob(bid, key string) {
 func (f *FileBlobWriter) Finalize() (bid string, key string, err error) {
 
 	// Throw out the last partial if needed
-	if f.buffer.Len() > 0 || len(f.partialBids) > 0 {
+	if f.buffer.Len() > 0 || len(f.partialBids) == 0 {
 		if err := f.finalizePartialBuffer(); err != nil {
 			return "", "", err
 		}
