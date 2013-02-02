@@ -4,6 +4,7 @@ package blobstore
 
 import (
 	"bytes"
+	"io"
 )
 
 func NewMemoryBlobStorage() BlobStorage {
@@ -48,4 +49,13 @@ func (s *memoryBlobStorage) NewBlobWriter(blobId string) (writer BlobWriter, err
 			storage: s,
 			bid:     blobId},
 		nil
+}
+
+func (s *memoryBlobStorage) NewBlobReader(blobId string) (reader io.Reader, err error) {
+	blob, ok := s.blobs[blobId]
+	if !ok {
+		return nil, ErrBIDNotFound
+	}
+
+	return bytes.NewReader(blob), nil
 }

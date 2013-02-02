@@ -4,6 +4,7 @@ package blobstore
 
 import (
 	"os"
+	"io"
 )
 
 func NewFileBlobStorage(path string) BlobStorage {
@@ -33,10 +34,18 @@ func (f *fileBlobWriter) Cancel() error {
 	return nil
 }
 
+func (s *fileBlobStorage) blobPath(blobId string) string {
+	return s.path + string(os.PathSeparator) + blobId
+}
+
 func (s *fileBlobStorage) NewBlobWriter(blobId string) (writer BlobWriter, err error) {
-	fl, err := os.OpenFile(s.path+string(os.PathSeparator)+blobId, os.O_WRONLY|os.O_CREATE, 0666)
+	fl, err := os.OpenFile(s.blobPath(blobId), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
 	return &fileBlobWriter{fl}, nil
+}
+
+func (s *fileBlobStorage) NewBlobReader(blobId string) (reader io.Reader, err error) {
+	return os.OpenFile(s.blobPath(blobId), os.O_RDONLY, 0666)
 }

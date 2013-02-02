@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrBIDCollision = errors.New("A colliding BID has been found")
+	ErrBIDNotFound  = errors.New("A blob with given BID was not found")
 )
 
 type BlobWriter interface {
@@ -27,4 +28,7 @@ type BlobStorage interface {
 
 	// Create new writer for blobs
 	NewBlobWriter(blobId string) (writer BlobWriter, err error)
+
+	// Create new reader for existing blob
+	NewBlobReader(blobId string) (reader io.Reader, err error)
 }
