@@ -1,7 +1,9 @@
 package blobstore
 
 import (
+	"bytes"
 	"encoding/hex"
+	"io/ioutil"
 	"strings"
 	"testing"
 )
@@ -12,7 +14,7 @@ var simpleTests = []struct {
 	key     string
 	bid     string
 }{
-	{
+	{ // Empty file
 		"",
 		"01 eb",
 		"01 7b54b668 36c1fbdd 13d2441d 9e1434dc 62ca677f b68f5fe6 6a464baa decdbd00",
@@ -41,9 +43,20 @@ func TestEmptyFile(t *testing.T) {
 		}
 
 		if rkey != key {
-			t.Error("Invalid key generated, got: %v, expected: %v", rkey, key)
+			t.Errorf("Invalid key generated, got: %v, expected: %v", rkey, key)
 		}
-		// TODO: Test the blob content
-		blob = blob
+
+		reader, err := m.NewBlobReader(rbid)
+		if err != nil {
+			t.Errorf("Couldn't open the blob with id: %v for reading: %v", rbid, err)
+		} else {
+
+			readBytes, err := ioutil.ReadAll(reader)
+			if err != nil {
+				t.Errorf("Couldn't read the blob with id: %v, error: %v", rbid, err)
+			} else if !bytes.Equal(readBytes, blob) {
+				t.Errorf("The blob with id: %v has invalid content", rbid)
+			}
+		}
 	}
 }
