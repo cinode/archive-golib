@@ -144,7 +144,6 @@ func (f *FileBlobWriter) Cancel() {
 
 	f.partialBids = nil
 	f.partialKeys = nil
-	f.partialDup = nil
 	f.buffer.Reset()
 	f.totalBytes = 0
 }
