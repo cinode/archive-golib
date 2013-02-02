@@ -56,7 +56,6 @@ func (f *FileBlobWriter) finalizePartialBuffer() error {
 	// Create the header
 	var hdr bytes.Buffer
 	hdr.WriteByte(blobTypeSimpleStaticFile)
-	serializeInt(int64(f.buffer.Len()), &hdr)
 
 	// Generate the blob
 	readerGen := func() io.Reader {
