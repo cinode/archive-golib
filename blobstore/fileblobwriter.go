@@ -129,12 +129,22 @@ func (f *FileBlobWriter) finalizeSplitFile() (bid string, key string, err error)
 		serializeString(f.partialKeys[i], &b)
 	}
 
+	// Write it all to the storage
 	return createHashValidatedBlobFromReaderGenerator(
 		func() io.Reader { return bytes.NewReader(b.Bytes()) },
 		f.Storage)
 }
 
-// Cancel the generation of file blob, remove all blobs generated so far
+// Cancel the generation of file blob.
+//
+// Note that if there were blobs generated so far, they won't be removed.
+// The current implementation allows such garbage favouring the simplicity
+// of implementation.
 func (f *FileBlobWriter) Cancel() {
-	// TODO: Implement this
+
+	f.partialBids = nil
+	f.partialKeys = nil
+	f.partialDup = nil
+	f.buffer.Reset()
+	f.totalBytes = 0
 }

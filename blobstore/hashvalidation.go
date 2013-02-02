@@ -34,14 +34,23 @@ func createHashValidatedBlobFromReaderGenerator(readerGenerator func() io.Reader
 	bid = hex.EncodeToString(hasher.Sum(nil))
 
 	// Finally generate the blob itself
-	blobWriter := storage.NewBlobWriter(bid)
+	blobWriter, err := storage.NewBlobWriter(bid)
+	if err != nil {
+		return
+	}
+	defer func() {
+		if err != nil {
+			blobWriter.Cancel()
+		}
+	}()
 	if _, err = blobWriter.Write([]byte{validationMethodHash}); err != nil {
-		// TODO: Cleanup
-		return "", "", err
+		return
 	}
 	if _, err = io.Copy(blobWriter, &encryptedBuffer); err != nil {
-		// TODO: Cleanup
-		return "", "", err
+		return
+	}
+	if err = blobWriter.Finalize(); err != nil {
+		return
 	}
 
 	// Ok, we're done here
