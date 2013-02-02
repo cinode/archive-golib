@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// Structure used to generate static file blobs
 type FileBlobWriter struct {
 
 	// Buffer for storing data before we can hash it
@@ -51,6 +52,8 @@ func (f *FileBlobWriter) Write(p []byte) (n int, err error) {
 	return written, nil
 }
 
+// Write the current content of internal buffer into a blob,
+// save it's id and key in a list of partial blobs
 func (f *FileBlobWriter) finalizePartialBuffer() error {
 
 	// Create the header
@@ -80,11 +83,13 @@ func (f *FileBlobWriter) finalizePartialBuffer() error {
 	return nil
 }
 
+// Save bid and key into a list of partial blobs
 func (f *FileBlobWriter) addPartialBlob(bid, key string) {
 	f.partialBids = append(f.partialBids, bid)
 	f.partialKeys = append(f.partialKeys, key)
 }
 
+// Finalize the generation of this file blob
 func (f *FileBlobWriter) Finalize() (bid string, key string, err error) {
 
 	// Throw out the last partial if needed
@@ -105,6 +110,7 @@ func (f *FileBlobWriter) Finalize() (bid string, key string, err error) {
 	return f.finalizeSplitFile()
 }
 
+// Finalize blob generation in case we've created split file blob
 func (f *FileBlobWriter) finalizeSplitFile() (bid string, key string, err error) {
 	var b bytes.Buffer
 
