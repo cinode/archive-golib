@@ -1,3 +1,7 @@
+// Copyright 2013 The Cinode Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package blobstore
 
 import (
@@ -22,6 +26,6 @@ func serializeInt(v int64, buff *bytes.Buffer) {
 
 func serializeString(s string, buff *bytes.Buffer) {
 	data := []byte(s)
-	serializeInt(int64(len(data)),buff)
+	serializeInt(int64(len(data)), buff)
 	buff.Write(data)
 }
