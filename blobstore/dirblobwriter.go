@@ -65,6 +65,7 @@ func (d *DirBlobWriter) finalizeSimple() (bid string, key string, err error) {
 
 	// Serialize the data
 	var buffer bytes.Buffer
+	buffer.WriteByte(blobTypeSimpleStaticDir)
 
 	// Number of entries first
 	serializeInt(int64(len(d.entries)), &buffer)
