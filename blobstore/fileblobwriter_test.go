@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-var simpleTests = []struct {
+var simpleFileTests = []struct {
 	content string
 	blobHex string
 	key     string
@@ -40,9 +40,9 @@ var simpleTests = []struct {
 		"4cfb056a 184d4377 eff9fc3e 8364906a f4b3b3c9 467c2fb8 245382bd d535ea17 f8a63abc 190a9253 9bd92951 52f112d3 365d4910 737b9f9f 3e0eb2f2 eef40648"},
 }
 
-func TestEmptyFile(t *testing.T) {
+func TestSimpleFiles(t *testing.T) {
 
-	for _, test := range simpleTests {
+	for _, test := range simpleFileTests {
 
 		key := strings.Replace(test.key, " ", "", -1)
 		bid := strings.Replace(test.bid, " ", "", -1)
