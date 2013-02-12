@@ -166,3 +166,32 @@ func TestSimpleFileBorder(t *testing.T) {
 	)
 
 }
+
+///////////////////////////////////////////////////////////////////////////////
+
+func TestSplitFiles1(t *testing.T) {
+
+	m := NewMemoryBlobStorage()
+	bw := FileBlobWriter{Storage: m}
+
+	// Fill the blob data
+	b := make([]byte, 1024)
+	for i, _ := range b {
+		b[i] = 'a'
+	}
+	for i := 0; i < 16*1024; i++ {
+		bw.Write(b)
+	}
+	bw.Write(b[:1])
+
+	blobValidation(
+		t,
+		blobTest{
+			"01a19f05435d5b1bc15ca651c37c517ad482efb4cfa76b6e46a3e48367d478049fd3c5550ac160bf...713b00729c26c6cb415226d4024264d5778fe10a9f31549abfc6bffe8fd6be4aa9094a3e4262c053",
+			"01bffd8d7830029b88367640a067ce1e0220a929fdd20c0a9157f6e1e094b19ff2",
+			"f8615f370c23b1bf7b654ed19aadc5e2011ff98d139cd1a05be588a8f4d03af375f3598a10b138e9106702945c7c1642827fa807d70a44454585ec5251d45b8a",
+		},
+		&bw,
+		m,
+	)
+}
