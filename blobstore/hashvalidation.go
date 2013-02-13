@@ -6,8 +6,6 @@ package blobstore
 
 import (
 	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/sha512"
 	"encoding/hex"
 	"io"
@@ -18,19 +16,15 @@ func createHashValidatedBlobFromReaderGenerator(readerGenerator func() io.Reader
 	// Generate the key
 	hasher := sha512.New()
 	io.Copy(hasher, readerGenerator())
-	keyRaw := hasher.Sum(nil)[:32]
-	key = cipherAES256Hex + hex.EncodeToString(keyRaw)
+	keySource := hasher.Sum(nil)
 
 	// Generate the encrypted content
 	encryptedBuffer := bytes.Buffer{}
-	blobCipher, _ := aes.NewCipher(keyRaw)
-	io.Copy(
-		&cipher.StreamWriter{
-			S: cipher.NewCFBEncrypter(
-				blobCipher,
-				make([]byte, 16)),
-			W: &encryptedBuffer},
-		readerGenerator())
+	encryptedWriter, key, err := createEncryptor(keySource, nil, &encryptedBuffer)
+	if err != nil {
+		return
+	}
+	io.Copy(encryptedWriter, readerGenerator())
 
 	// Generate blob id
 	hasher.Reset()
