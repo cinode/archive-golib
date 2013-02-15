@@ -14,7 +14,7 @@ var (
 	ErrBIDNotFound  = errors.New("A blob with given BID was not found")
 )
 
-type BlobWriter interface {
+type WriteFinalizeCanceler interface {
 	io.Writer
 
 	// Finalize blob generation, if no error is returned,
@@ -31,7 +31,7 @@ type BlobWriter interface {
 type BlobStorage interface {
 
 	// Create new writer for blobs
-	NewBlobWriter(blobId string) (writer BlobWriter, err error)
+	NewBlobWriter(blobId string) (writer WriteFinalizeCanceler, err error)
 
 	// Create new reader for existing blob
 	NewBlobReader(blobId string) (reader io.Reader, err error)

@@ -48,7 +48,7 @@ func (f *memoryBlobWriter) Cancel() error {
 	return nil
 }
 
-func (s *memoryBlobStorage) NewBlobWriter(blobId string) (writer BlobWriter, err error) {
+func (s *memoryBlobStorage) NewBlobWriter(blobId string) (writer WriteFinalizeCanceler, err error) {
 	return &memoryBlobWriter{
 			storage: s,
 			bid:     blobId},

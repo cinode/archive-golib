@@ -42,7 +42,7 @@ func (s *fileBlobStorage) blobPath(blobId string) string {
 	return s.path + string(os.PathSeparator) + blobId
 }
 
-func (s *fileBlobStorage) NewBlobWriter(blobId string) (writer BlobWriter, err error) {
+func (s *fileBlobStorage) NewBlobWriter(blobId string) (writer WriteFinalizeCanceler, err error) {
 	fl, err := os.OpenFile(s.blobPath(blobId), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
