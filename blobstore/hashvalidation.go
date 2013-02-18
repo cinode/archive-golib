@@ -8,7 +8,12 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"encoding/hex"
+	"errors"
 	"io"
+)
+
+var (
+	ErrInvalidValidationMethod = errors.New("Invalid validation method")
 )
 
 func createHashValidatedBlobFromReaderGenerator(readerGenerator func() io.Reader, storage BlobStorage) (bid string, key string, err error) {
@@ -53,4 +58,29 @@ func createHashValidatedBlobFromReaderGenerator(readerGenerator func() io.Reader
 
 	// Ok, we're done here
 	return
+}
+
+func createReaderForHashBlobData(reader io.Reader, key string) (rawReader io.Reader, err error) {
+	return createDecryptor(key, nil, reader)
+}
+
+func createReaderForHashBlob(bid string, key string, storage BlobStorage) (rawReader io.Reader, err error) {
+
+	// Get the reader
+	encryptedReader, err := storage.NewBlobReader(bid)
+	if err != nil {
+		return
+	}
+
+	// Test the validation method
+	validationType, err := deserializeInt(encryptedReader)
+	if err != nil {
+		return
+	}
+	if validationType != validationMethodHash {
+		return nil, ErrInvalidValidationMethod
+	}
+
+	// Get the encryptor
+	return createReaderForHashBlobData(encryptedReader, key)
 }
