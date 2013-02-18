@@ -66,7 +66,7 @@ func deserializeString(r io.Reader, maxLength int64) (v string, err error) {
 	}
 
 	if (length < 0) || (length > maxLength) {
-		return ErrDeserializeStringToLarge
+		return "", ErrDeserializeStringToLarge
 	}
 
 	buffer := make([]byte, length)
@@ -75,8 +75,8 @@ func deserializeString(r io.Reader, maxLength int64) (v string, err error) {
 	}
 
 	if !utf8.Valid(buffer) {
-		return ErrDeserializeStringNotUTF8
+		return "", ErrDeserializeStringNotUTF8
 	}
 
-	return string(buffer)
+	return string(buffer), nil
 }
