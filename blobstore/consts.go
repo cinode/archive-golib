@@ -16,5 +16,9 @@ const (
 	maxSimpleFileDataSize = 16 * 1024 * 1024
 	maxSimpleDirEntries   = 1024
 
+	maxSaneSplitFileParts = 1024 * 1024
+	maxSaneBidLength      = 1024
+	maxSaneKeyLength      = 16 * 1024
+
 	validationMethodHash = 0x01
 )
