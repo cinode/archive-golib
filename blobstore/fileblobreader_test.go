@@ -69,3 +69,54 @@ func TestAlphabetFileBlob(t *testing.T) {
 			0x78, 0x79, 0x7a, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54,
 			0x55, 0x56, 0x57, 0x58, 0x59, 0x5a})
 }
+
+func TestSplitAaaaFile(t *testing.T) {
+
+	storage := NewMemoryBlobStorage()
+
+	writer := FileBlobWriter{Storage: storage}
+
+	// Fill the blob data with 'a' crossing the simple file blob capacity by 1 byte
+	b := make([]byte, 1024)
+	for i, _ := range b {
+		b[i] = 'a'
+	}
+	for i := 0; i < 16*1024; i++ {
+		writer.Write(b)
+	}
+	writer.Write(b[:1])
+	bid, key, err := writer.Finalize()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bid != "f8615f370c23b1bf7b654ed19aadc5e2011ff98d139cd1a05be588a8f4d03af375f3598a10b138e9106702945c7c1642827fa807d70a44454585ec5251d45b8a" ||
+		key != "01bffd8d7830029b88367640a067ce1e0220a929fdd20c0a9157f6e1e094b19ff2" {
+		t.Fatal("Invalid blob generated for testing")
+	}
+
+	rdr := FileBlobReader{Storage: storage}
+	if err = rdr.Open(bid, key); err != nil {
+		t.Fatal(err)
+	}
+
+	data, err := ioutil.ReadAll(&rdr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	totalSize := 16*1024*1024 + 1
+	if len(data) != totalSize {
+		t.Fatalf("Blob size does not match, expected: %v, got %v", totalSize, len(data))
+	}
+
+	for i := 0; i < totalSize; i += 1024 {
+		blockLen := totalSize - i
+		if blockLen > 1024 {
+			blockLen = 1024
+		}
+		if !bytes.Equal(data[i:i+blockLen], b[:blockLen]) {
+			t.Error("Invalid blob content")
+		}
+	}
+
+}
