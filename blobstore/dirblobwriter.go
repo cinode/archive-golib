@@ -12,7 +12,7 @@ import (
 
 // Helper structure for holding one directory entry
 type dirEntry struct {
-	name, bid, key string
+	name, mimeType, bid, key string
 }
 
 // Helper for sorting by name
@@ -42,12 +42,13 @@ type DirBlobWriter struct {
 
 // Adds a new entry to the directory
 // TODO: Don't allow adding duplicated entries 
-func (d *DirBlobWriter) AddEntry(name, bid, key string) error {
+func (d *DirBlobWriter) AddEntry(name, mimeType, bid, key string) error {
 	d.entries = append(d.entries,
 		&dirEntry{
-			name: name,
-			bid:  bid,
-			key:  key})
+			name:     name,
+			mimeType: mimeType,
+			bid:      bid,
+			key:      key})
 	return nil
 }
 
@@ -73,6 +74,7 @@ func (d *DirBlobWriter) finalizeSimple() (bid string, key string, err error) {
 	// All entries right after
 	for _, entry := range d.entries {
 		serializeString(entry.name, &buffer)
+		serializeString(entry.mimeType, &buffer)
 		serializeString(entry.bid, &buffer)
 		serializeString(entry.key, &buffer)
 	}
