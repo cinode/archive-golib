@@ -52,7 +52,7 @@ func (d *dirBlobReader) Open(bid, key string) error {
 		}
 		return nil
 
-	case blobTypeSplitStaticFile:
+	case blobTypeSplitStaticDir:
 		panic("Split directory blobs are unimplemented")
 	}
 
