@@ -1,23 +1,13 @@
 package blobstore
 
 import (
-	"errors"
 	"io"
-)
-
-var (
-	ErrFileNeedsHashValidationMethod    = errors.New("Invalid blob validation method used - the file blob requires a hash-based validation")
-	ErrInvalidBlobType                  = errors.New("Invalid blob type - not a file blob")
-	ErrInvalidSplitFileSize             = errors.New("Invalid size of a split file")
-	ErrMalformedSplitFileSizePartsCount = errors.New("Invalid split file blob - number of partial blobs is incorrect")
-	ErrMalformedSplitFileExtraData      = errors.New("Invalid split file blob - extra bytes found at the end of the blob")
-	ErrMalformedSplitFileExtraDataPart  = errors.New("Invalid split file blob - extra bytes found at the end of the partial blob")
-	ErrInvalidSubBlobType               = errors.New("Invalid sub blob type - not a file blob")
 )
 
 // FileBlobReader is a structure that can be used to easily read from file blobs
 type FileBlobReader struct {
-	Storage             BlobStorage // Storage object
+	baseBlobReader                  // Inherit methods of base blob reader
+	Storage             BlobStorage // Blob storage
 	currentReader       io.Reader   // Reader object currently used
 	isSplit             bool        // Flag indicating whether this is a split file
 	totalSize           int64       // Total file size. Valid for split files only, used for validation purposes only
@@ -31,7 +21,7 @@ type FileBlobReader struct {
 func (f *FileBlobReader) Open(bid, key string) error {
 
 	// Get the raw blob reader
-	reader, blobType, err := f.openInternal(bid, key)
+	reader, blobType, err := f.openInternal(f.Storage, bid, key, validationMethodHash)
 	if err != nil {
 		return err
 	}
@@ -50,42 +40,7 @@ func (f *FileBlobReader) Open(bid, key string) error {
 		return f.loadSplitFileData(reader)
 	}
 
-	return ErrInvalidBlobType
-}
-
-// Internal function, try to open a blob having it's bid and key,
-// don't interpret anything but blob's type
-func (f *FileBlobReader) openInternal(bid, key string) (reader io.Reader, blobType int64, err error) {
-
-	// Get the raw blob reader
-	if reader, err = f.Storage.NewBlobReader(bid); err != nil {
-		return
-	}
-
-	// Find out the validation method
-	validationMethod, err := deserializeInt(reader)
-	if err != nil {
-		return
-	}
-
-	// File blobs must use the hash-based validation
-	// TODO: We may relax this if we start using links and decide to dereference links here
-	if validationMethod != validationMethodHash {
-		return nil, 0, ErrFileNeedsHashValidationMethod
-	}
-
-	// Get the unencrypted stream
-	if reader, err = createReaderForHashBlobData(reader, key); err != nil {
-		return
-	}
-
-	// See what type of a blob this is
-	blobType, err = deserializeInt(reader)
-	if err != nil {
-		return
-	}
-
-	return
+	return ErrInvalidFileBlobType
 }
 
 // Setup the reader for loading split file content
@@ -192,12 +147,13 @@ func (f *FileBlobReader) switchToNextPartialBlob() error {
 	}
 
 	// Try to open the next blob
-	reader, blobType, err := f.openInternal(f.otherBlobsBidsLeft[0], f.otherBlobsKeysLeft[0])
+	reader, blobType, err := f.openInternal(f.Storage,
+		f.otherBlobsBidsLeft[0], f.otherBlobsKeysLeft[0], validationMethodHash)
 	if err != nil {
 		return err
 	}
 	if blobType != blobTypeSimpleStaticFile {
-		return ErrInvalidSubBlobType
+		return ErrInvalidFileSubBlobType
 	}
 
 	// Update structures

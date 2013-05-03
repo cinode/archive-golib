@@ -8,12 +8,7 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"encoding/hex"
-	"errors"
 	"io"
-)
-
-var (
-	ErrInvalidValidationMethod = errors.New("Invalid validation method")
 )
 
 func createHashValidatedBlobFromReaderGenerator(readerGenerator func() io.Reader, storage BlobStorage) (bid string, key string, err error) {
