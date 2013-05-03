@@ -19,6 +19,8 @@ const (
 	maxSaneSplitFileParts = 1024 * 1024
 	maxSaneBidLength      = 1024
 	maxSaneKeyLength      = 16 * 1024
+	maxSaneNameLenght     = 1024
+	maxSaneMimeTypeLength = 128
 
 	validationMethodHash = 0x01
 )
