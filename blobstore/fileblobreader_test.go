@@ -18,13 +18,13 @@ func genericFileBlobTest(t *testing.T, bid, key string, blobContent, fileContent
 
 	putBlob(storage, bid, blobContent)
 
-	rdr := FileBlobReader{Storage: storage}
+	rdr := NewFileBlobReader(storage)
 	err := rdr.Open(bid, key)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	data, err := ioutil.ReadAll(&rdr)
+	data, err := ioutil.ReadAll(rdr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,12 +94,12 @@ func TestSplitAaaaFile(t *testing.T) {
 		t.Fatal("Invalid blob generated for testing")
 	}
 
-	rdr := FileBlobReader{Storage: storage}
+	rdr := NewFileBlobReader(storage)
 	if err = rdr.Open(bid, key); err != nil {
 		t.Fatal(err)
 	}
 
-	data, err := ioutil.ReadAll(&rdr)
+	data, err := ioutil.ReadAll(rdr)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -4,24 +4,35 @@ import (
 	"io"
 )
 
-// FileBlobReader is a structure that can be used to easily read from file blobs
-type FileBlobReader struct {
-	baseBlobReader                  // Inherit methods of base blob reader
-	Storage             BlobStorage // Blob storage
-	currentReader       io.Reader   // Reader object currently used
-	isSplit             bool        // Flag indicating whether this is a split file
-	totalSize           int64       // Total file size. Valid for split files only, used for validation purposes only
-	thisBlobBytesLeft   int         // Number of bytes left to read from this particular blob
-	otherBlobsBytesLeft int64       // Number of bytes left to read in all blobs but this particular one
-	otherBlobsBidsLeft  []string    // Bids for blobs not yet read
-	otherBlobsKeysLeft  []string    // Keys for blobs not yet read
+type FileBlobReader interface {
+	io.Reader
+
+	Open(bid, key string) error
+}
+
+// fileBlobReader is a structure that can be used to easily read from file blobs
+type fileBlobReader struct {
+	baseBlobReader                // Inherit methods of base blob reader
+	currentReader       io.Reader // Reader object currently used
+	isSplit             bool      // Flag indicating whether this is a split file
+	totalSize           int64     // Total file size. Valid for split files only, used for validation purposes only
+	thisBlobBytesLeft   int       // Number of bytes left to read from this particular blob
+	otherBlobsBytesLeft int64     // Number of bytes left to read in all blobs but this particular one
+	otherBlobsBidsLeft  []string  // Bids for blobs not yet read
+	otherBlobsKeysLeft  []string  // Keys for blobs not yet read
+}
+
+func NewFileBlobReader(storage BlobStorage) FileBlobReader {
+	return &fileBlobReader{
+		baseBlobReader: baseBlobReader{
+			storage: storage}}
 }
 
 // Open does open blob with given bid and key
-func (f *FileBlobReader) Open(bid, key string) error {
+func (f *fileBlobReader) Open(bid, key string) error {
 
 	// Get the raw blob reader
-	reader, blobType, err := f.openInternal(f.Storage, bid, key, validationMethodHash)
+	reader, blobType, err := f.openInternal(bid, key, validationMethodHash)
 	if err != nil {
 		return err
 	}
@@ -44,7 +55,7 @@ func (f *FileBlobReader) Open(bid, key string) error {
 }
 
 // Setup the reader for loading split file content
-func (f *FileBlobReader) loadSplitFileData(masterBlobReader io.Reader) error {
+func (f *fileBlobReader) loadSplitFileData(masterBlobReader io.Reader) error {
 
 	// Read the size
 	totalSize, err := deserializeInt(masterBlobReader)
@@ -103,7 +114,7 @@ func (f *FileBlobReader) loadSplitFileData(masterBlobReader io.Reader) error {
 	return nil
 }
 
-func (f *FileBlobReader) Read(p []byte) (n int, err error) {
+func (f *fileBlobReader) Read(p []byte) (n int, err error) {
 
 	// Simple case for the non-split file
 	if !f.isSplit {
@@ -134,7 +145,7 @@ func (f *FileBlobReader) Read(p []byte) (n int, err error) {
 	return
 }
 
-func (f *FileBlobReader) switchToNextPartialBlob() error {
+func (f *fileBlobReader) switchToNextPartialBlob() error {
 
 	// Return EOF if no more blobs left
 	if len(f.otherBlobsBidsLeft) == 0 {
@@ -147,8 +158,9 @@ func (f *FileBlobReader) switchToNextPartialBlob() error {
 	}
 
 	// Try to open the next blob
-	reader, blobType, err := f.openInternal(f.Storage,
-		f.otherBlobsBidsLeft[0], f.otherBlobsKeysLeft[0], validationMethodHash)
+	reader, blobType, err := f.openInternal(
+		f.otherBlobsBidsLeft[0], f.otherBlobsKeysLeft[0],
+		validationMethodHash)
 	if err != nil {
 		return err
 	}
@@ -170,7 +182,7 @@ func (f *FileBlobReader) switchToNextPartialBlob() error {
 	return nil
 }
 
-func (f *FileBlobReader) atEOF(r io.Reader) bool {
+func (f *fileBlobReader) atEOF(r io.Reader) bool {
 	// TODO: We're using this for validation only, implement the proper version
 	return true
 }

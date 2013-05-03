@@ -5,16 +5,17 @@ import (
 )
 
 type baseBlobReader struct {
+	storage BlobStorage // Blob storage
 }
 
 // Internal function, try to open a blob having it's bid and key,
 // don't interpret anything but blob's type
 func (r *baseBlobReader) openInternal(
-	storage BlobStorage, bid, key string, requiredValidationMethod int64) (
+	bid, key string, requiredValidationMethod int64) (
 	reader io.Reader, blobType int64, err error) {
 
 	// Get the raw blob reader
-	if reader, err = storage.NewBlobReader(bid); err != nil {
+	if reader, err = r.storage.NewBlobReader(bid); err != nil {
 		return
 	}
 
