@@ -98,7 +98,12 @@ func TestSimpleDirs(t *testing.T) {
 		m := NewMemoryBlobStorage()
 		dw := DirBlobWriter{Storage: m}
 		for _, entry := range test.entries {
-			dw.AddEntry(entry.name, entry.mimeType, entry.bid, entry.key)
+			dw.AddEntry(DirEntry{
+				Name:     entry.name,
+				MimeType: entry.mimeType,
+				Bid:      entry.bid,
+				Key:      entry.key,
+			})
 		}
 
 		rbid, rkey, err := dw.Finalize()

@@ -10,20 +10,15 @@ import (
 	"sort"
 )
 
-// Helper structure for holding one directory entry
-type dirEntry struct {
-	name, mimeType, bid, key string
-}
-
 // Helper for sorting by name
-type sortByName []*dirEntry
+type sortByName []*DirEntry
 
 func (s sortByName) Len() int {
 	return len(s)
 }
 
 func (s sortByName) Less(i, j int) bool {
-	return s[i].name < s[j].name
+	return s[i].Name < s[j].Name
 }
 
 func (s sortByName) Swap(i, j int) {
@@ -37,18 +32,13 @@ type DirBlobWriter struct {
 	Storage BlobStorage
 
 	// A list of currently handled entries
-	entries []*dirEntry
+	entries []*DirEntry
 }
 
 // Adds a new entry to the directory
 // TODO: Don't allow adding duplicated entries 
-func (d *DirBlobWriter) AddEntry(name, mimeType, bid, key string) error {
-	d.entries = append(d.entries,
-		&dirEntry{
-			name:     name,
-			mimeType: mimeType,
-			bid:      bid,
-			key:      key})
+func (d *DirBlobWriter) AddEntry(entry DirEntry) error {
+	d.entries = append(d.entries, &entry)
 	return nil
 }
 
@@ -73,10 +63,7 @@ func (d *DirBlobWriter) finalizeSimple() (bid string, key string, err error) {
 
 	// All entries right after
 	for _, entry := range d.entries {
-		serializeString(entry.name, &buffer)
-		serializeString(entry.mimeType, &buffer)
-		serializeString(entry.bid, &buffer)
-		serializeString(entry.key, &buffer)
+		entry.serialize(&buffer)
 	}
 
 	// Create blob out of the data
