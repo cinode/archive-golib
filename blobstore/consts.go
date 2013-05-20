@@ -23,4 +23,5 @@ const (
 	maxSaneMimeTypeLength = 128
 
 	validationMethodHash = 0x01
+	validationMethodSign = 0x02
 )
