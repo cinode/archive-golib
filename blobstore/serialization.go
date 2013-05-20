@@ -32,10 +32,13 @@ func serializeInt(v int64, buff *bytes.Buffer) {
 	}
 }
 
-func serializeString(s string, buff *bytes.Buffer) {
-	data := []byte(s)
+func serializeBuffer(data []byte, buff *bytes.Buffer) {
 	serializeInt(int64(len(data)), buff)
 	buff.Write(data)
+}
+
+func serializeString(s string, buff *bytes.Buffer) {
+	serializeBuffer([]byte(s), buff)
 }
 
 func deserializeInt(r io.Reader) (v int64, err error) {
@@ -59,18 +62,28 @@ func deserializeInt(r io.Reader) (v int64, err error) {
 	return
 }
 
-func deserializeString(r io.Reader, maxLength int64) (v string, err error) {
+func deserializeBuffer(r io.Reader, maxLength int64) (data []byte, err error) {
 	length, err := deserializeInt(r)
 	if err != nil {
 		return
 	}
 
 	if (length < 0) || (length > maxLength) {
-		return "", ErrDeserializeStringToLarge
+		return nil, ErrDeserializeStringToLarge
 	}
 
 	buffer := make([]byte, length)
 	if _, err = io.ReadFull(r, buffer); err != nil {
+		return
+	}
+
+	return buffer, nil
+}
+
+func deserializeString(r io.Reader, maxLength int64) (s string, err error) {
+
+	buffer, err := deserializeBuffer(r, maxLength)
+	if err != nil {
 		return
 	}
 
