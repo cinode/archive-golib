@@ -10,7 +10,6 @@ import (
 )
 
 type privateKey *rsa.PrivateKey
-type publicKey *rsa.PublicKey
 
 func createSignValidatedBlobFromReaderGenerator(
 	readerGenerator func() io.Reader,
@@ -104,7 +103,7 @@ func createReaderForSignedBlobData(reader io.Reader, bid, key string) (rawReader
 	if err != nil {
 		return
 	}
-	pubKeyParsed, ok := pubKeyParsedRaw.(publicKey)
+	pubKeyParsed, ok := pubKeyParsedRaw.(*rsa.PublicKey)
 	if !ok {
 		return nil, ErrUnknownPublicKeyType
 	}
