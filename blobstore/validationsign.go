@@ -81,6 +81,11 @@ func createSignValidatedBlobFromReaderGenerator(
 		return
 	}
 
+	// Finalize the blob
+	if err = blobWriter.Finalize(); err != nil {
+		return
+	}
+
 	// Ok, we're done here
 	return bid, key, nil
 }
