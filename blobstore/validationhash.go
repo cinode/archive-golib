@@ -56,6 +56,8 @@ func createHashValidatedBlobFromReaderGenerator(readerGenerator func() io.Reader
 }
 
 func createReaderForHashBlobData(reader io.Reader, key string) (rawReader io.Reader, err error) {
+	// TODO: We could validate the content while it's being read - generate the hash
+	// and throw some error when reaching EOF and having invalid hash
 	return createDecryptor(key, nil, reader)
 }
 

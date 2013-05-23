@@ -16,11 +16,13 @@ const (
 	maxSimpleFileDataSize = 16 * 1024 * 1024
 	maxSimpleDirEntries   = 1024
 
-	maxSaneSplitFileParts = 1024 * 1024
-	maxSaneBidLength      = 1024
-	maxSaneKeyLength      = 16 * 1024
-	maxSaneNameLenght     = 1024
-	maxSaneMimeTypeLength = 128
+	maxSaneSplitFileParts  = 1024 * 1024
+	maxSaneBidLength       = 1024
+	maxSaneKeyLength       = 16 * 1024
+	maxSaneNameLenght      = 1024
+	maxSaneMimeTypeLength  = 128
+	maxSanePubKeyLength    = 32 * 1024
+	maxSaneSignatureLength = 1024
 
 	validationMethodHash = 0x01
 	validationMethodSign = 0x02

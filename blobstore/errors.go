@@ -15,4 +15,7 @@ var (
 	ErrMalformedDirInvalidEntriesCount = errors.New("Invalid directory blob - incorrect number of entries found")
 	ErrMalformedDirExtraData           = errors.New("Invalid directory blob - extra bytes found at the end")
 	ErrNoMoreDirEntries                = errors.New("No more directory entries found")
+
+	ErrInvalidPublicKeyBid  = errors.New("Invalid public key - does not match blob id")
+	ErrUnknownPublicKeyType = errors.New("Unknown public key type")
 )

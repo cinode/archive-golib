@@ -11,6 +11,7 @@ import (
 )
 
 type privateKey *rsa.PrivateKey
+type publicKey *rsa.PublicKey
 
 func createSignValidatedBlobFromReaderGenerator(
 	readerGenerator func() io.Reader,
@@ -83,4 +84,70 @@ func createSignValidatedBlobFromReaderGenerator(
 
 	// Ok, we're done here
 	return bid, key, nil
+}
+
+func createReaderForSignedBlobData(reader io.Reader, bid, key string) (rawReader io.Reader, err error) {
+
+	// Grab the public key blob
+	pubkey, err := deserializeBuffer(reader, maxSanePubKeyLength)
+	if err != nil {
+		return
+	}
+
+	// Validate blob id agains public key
+	if hex.EncodeToString(sha512.New().Sum(pubkey)) != bid {
+		return nil, ErrInvalidPublicKeyBid
+	}
+
+	// Parse the public key
+	pubKeyParsedRaw, err := x509.ParsePKIXPublicKey(pubkey)
+	if err != nil {
+		return
+	}
+	pubKeyParsed, ok := pubKeyParsedRaw.(publicKey)
+	if !ok {
+		return nil, ErrUnknownPublicKeyType
+	}
+
+	// Read the signature
+	signature, err := deserializeBuffer(reader, maxSaneSignatureLength)
+	if err != nil {
+		return
+	}
+
+	// Read the version
+	version, err := deserializeInt(reader)
+	if err != nil {
+		return
+	}
+
+	// TODO: Create validating reader that will check the signature when
+	//       we reach EOF
+	_, _ = signature, pubKeyParsed
+
+	// Create the decryptor of the content
+	verBuffer := bytes.Buffer{}
+	serializeInt(version, &verBuffer)
+	return createDecryptor(key, verBuffer.Bytes(), reader)
+}
+
+func createReaderForSignedBlob(bid string, key string, storage BlobStorage) (rawReader io.Reader, err error) {
+
+	// Get the reader
+	encryptedReader, err := storage.NewBlobReader(bid)
+	if err != nil {
+		return
+	}
+
+	// Test the validation method
+	validationType, err := deserializeInt(encryptedReader)
+	if err != nil {
+		return
+	}
+	if validationType != validationMethodSign {
+		return nil, ErrInvalidValidationMethod
+	}
+
+	// Get the encryptor
+	return createReaderForSignedBlobData(encryptedReader, bid, key)
 }
