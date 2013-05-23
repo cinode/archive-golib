@@ -3,6 +3,7 @@ package blobstore
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/sha512"
 	"encoding/hex"
 	"errors"
 	"io"
@@ -92,4 +93,10 @@ func createDecryptorAES256(key []byte, ivSource []byte, input io.Reader) (reader
 				iv[:]),
 			R: input},
 		nil
+}
+
+func createDataHash(data []byte) []byte {
+	hasher := sha512.New()
+	hasher.Write(data)
+	return hasher.Sum(nil)
 }
