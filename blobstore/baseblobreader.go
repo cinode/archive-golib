@@ -32,7 +32,7 @@ func (r *baseBlobReader) openInternal(
 	}
 
 	// Get the unencrypted stream
-	if reader, err = createReaderForHashBlobData(reader, key); err != nil {
+	if reader, err = createReaderForHashBlobData(reader, bid, key); err != nil {
 		return
 	}
 
