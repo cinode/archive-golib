@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/rsa"
-	"crypto/sha512"
 	"crypto/x509"
 	"encoding/hex"
 	"io"
@@ -26,7 +25,7 @@ func createSignValidatedBlobFromReaderGenerator(
 ) {
 
 	// We're using hash of the private key to create the encryption data key
-	dataKey := sha512.New().Sum(x509.MarshalPKCS1PrivateKey(privKey))
+	dataKey := createDataHash(x509.MarshalPKCS1PrivateKey(privKey))
 
 	// Version + encrypted data buffer
 	verDataBuffer := bytes.Buffer{}
@@ -41,8 +40,9 @@ func createSignValidatedBlobFromReaderGenerator(
 
 	// Calculate the signature of version + encrypted data blob
 	signature, err := rsa.SignPKCS1v15(
-		nil, privKey, crypto.SHA512,
-		crypto.SHA512.New().Sum(verDataBuffer.Bytes()))
+		nil, privKey,
+		crypto.SHA512,
+		createDataHash(verDataBuffer.Bytes()))
 	if err != nil {
 		return
 	}
@@ -54,7 +54,7 @@ func createSignValidatedBlobFromReaderGenerator(
 	}
 
 	// Generate the BID from the public key
-	bid := hex.EncodeToString(sha512.New().Sum(pubKey))
+	bid := hex.EncodeToString(createDataHash(pubKey))
 
 	// Open the blob for writing
 	blobWriter, err := storage.NewBlobWriter(bid)
@@ -95,7 +95,7 @@ func createReaderForSignedBlobData(reader io.Reader, bid, key string) (rawReader
 	}
 
 	// Validate blob id agains public key
-	if hex.EncodeToString(sha512.New().Sum(pubkey)) != bid {
+	if hex.EncodeToString(createDataHash(pubkey)) != bid {
 		return nil, ErrInvalidPublicKeyBid
 	}
 
