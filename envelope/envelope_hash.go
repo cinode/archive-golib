@@ -1,20 +1,43 @@
 package envelope
 
-import ()
+import (
+	"github.com/cinode/golib/localstorage"
+	"github.com/cinode/golib/utils"
+	"io"
+)
 
 type envelopeHash struct {
-	bid string
+	bid     string
+	storage localstorage.Storage
 }
 
 // Get envelope type
 func (e *envelopeHash) GetType() int {
-	return TypeHash
+	return EnvelopeTypeHash
 }
 
 // Make sure the envelope is valid by analyzing the content in the
 // assigned storage, null will be returned on success, error with
 // validation result will be returned on failure
 func (e *envelopeHash) Validate() error {
+
+	r, err := e.storage.GetBlobReader(e.bid)
+	if err != nil {
+		return err
+	}
+
+	defer r.Close()
+
+	t, err := utils.DeserializeInt(r)
+	if err != nil {
+		return err
+	}
+
+	if t != EnvelopeTypeHash {
+		return ErrInvalidEnvelopeType
+	}
+
+	panic("Unimplemented")
 }
 
 // Get the BID for this envelope, this can be null in case
@@ -39,14 +62,15 @@ func (e *envelopeHash) GetChunksCount() int {
 // Get chunk reader
 func (e *envelopeHash) GetChunkReader(chunkNumber int) (reader io.Reader, err error) {
 
-	if i < 0 {
+	if chunkNumber < 0 {
 		return nil, ErrInvalidChunkNumber
 	}
-	
+
 	if e.bid == "" {
 		return nil, ErrUninitialized
 	}
 
+	panic("Unimplemented")
 }
 
 // Get writer to new chunk that will be appended to list of chunks
@@ -57,10 +81,14 @@ func (e *envelopeHash) GetChunkReader(chunkNumber int) (reader io.Reader, err er
 // Make sure to close the writer after writing all data. Closing the
 // writer does actually materialize the chunk and in some cases finalize
 // blob generation
-func (e *envelopeHash) GetNewChunkWriter() (writer io.WriteCloser, err error) {}
+func (e *envelopeHash) GetNewChunkWriter() (writer io.WriteCloser, err error) {
+	panic("Unimplemented")
+}
 
 // Get named attribute, null will be returned for invalid name
-func (e *envelopeHash) GetAttribute(name string) interface{} {}
+func (e *envelopeHash) GetAttribute(name string) interface{} {
+	panic("Unimplemented")
+}
 
 // Synchronize current blob with other node.
 //
@@ -68,4 +96,6 @@ func (e *envelopeHash) GetAttribute(name string) interface{} {}
 // envelopes of exactly the same type. This method should be very
 // carefull though since the communication channel may be used to
 // perform various attacks on our node.
-func (e *envelopeHash) SynchronizeWithOtherNode(channel io.ReadWriteCloser, active bool) error {}
+func (e *envelopeHash) SynchronizeWithOtherNode(channel io.ReadWriteCloser, active bool) error {
+	panic("Unimplemented")
+}

@@ -1,5 +1,5 @@
 package envelope
 
 const (
-	TypeHash = 1
+	EnvelopeTypeHash = 1
 )
