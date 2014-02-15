@@ -15,7 +15,7 @@ var (
 	ErrDeserializeStringNotUTF8 = errors.New("Could not deserialize string value - not a UTF-8 sequence")
 )
 
-func serializeInt(v uint64, w io.Writer) error {
+func SerializeInt(v uint64, w io.Writer) error {
 
 	buff := make([]byte, 0, 10)
 
@@ -37,9 +37,9 @@ func serializeInt(v uint64, w io.Writer) error {
 	return err
 }
 
-func serializeBuffer(data []byte, w io.Writer) error {
+func SerializeBuffer(data []byte, w io.Writer) error {
 
-	if err := serializeInt(uint64(len(data)), w); err != nil {
+	if err := SerializeInt(uint64(len(data)), w); err != nil {
 		return err
 	}
 
@@ -50,11 +50,11 @@ func serializeBuffer(data []byte, w io.Writer) error {
 	return nil
 }
 
-func serializeString(s string, w io.Writer) error {
-	return serializeBuffer([]byte(s), w)
+func SerializeString(s string, w io.Writer) error {
+	return SerializeBuffer([]byte(s), w)
 }
 
-func deserializeInt(r io.Reader) (v uint64, err error) {
+func DeserializeInt(r io.Reader) (v uint64, err error) {
 	// TODO: Overflows
 	v, s := 0, uint(0)
 	buff := []byte{0}
@@ -75,8 +75,8 @@ func deserializeInt(r io.Reader) (v uint64, err error) {
 	return
 }
 
-func deserializeBuffer(r io.Reader, maxLength uint64) (data []byte, err error) {
-	length, err := deserializeInt(r)
+func DeserializeBuffer(r io.Reader, maxLength uint64) (data []byte, err error) {
+	length, err := DeserializeInt(r)
 	if err != nil {
 		return
 	}
@@ -93,9 +93,9 @@ func deserializeBuffer(r io.Reader, maxLength uint64) (data []byte, err error) {
 	return buffer, nil
 }
 
-func deserializeString(r io.Reader, maxLength uint64) (s string, err error) {
+func DeserializeString(r io.Reader, maxLength uint64) (s string, err error) {
 
-	buffer, err := deserializeBuffer(r, maxLength)
+	buffer, err := DeserializeBuffer(r, maxLength)
 	if err != nil {
 		return
 	}

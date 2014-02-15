@@ -26,7 +26,7 @@ func TestIntSerialization(t *testing.T) {
 
 		var b bytes.Buffer
 
-		err := serializeInt(tst.value, &b)
+		err := SerializeInt(tst.value, &b)
 
 		if err != nil {
 			t.Fatalf("Error while serializing int: %v", err)
@@ -44,7 +44,7 @@ func TestIntSerialization(t *testing.T) {
 		}
 
 		// Try to serialize back
-		d, err := deserializeInt(&b)
+		d, err := DeserializeInt(&b)
 		if err != nil {
 			t.Fatalf("Error while deserializing int back: %v", err)
 			continue
