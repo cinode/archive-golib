@@ -50,7 +50,7 @@ func (e *envelopeHash) Validate() error {
 	}
 
 	// BID must be equal to hash of the content
-	if hex.EncodeToString(r.Sum(nil)) != e.bid {
+	if hex.EncodeToString(hasher.Sum(nil)) != e.bid {
 		return ErrInvalidHashBID
 	}
 

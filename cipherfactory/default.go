@@ -6,6 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"errors"
+	"hash"
 	"io"
 )
 
