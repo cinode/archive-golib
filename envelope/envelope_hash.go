@@ -1,6 +1,8 @@
 package envelope
 
 import (
+	"encoding/hex"
+	"github.com/cinode/golib/cipherfactory"
 	"github.com/cinode/golib/localstorage"
 	"github.com/cinode/golib/utils"
 	"io"
@@ -9,6 +11,7 @@ import (
 type envelopeHash struct {
 	bid     string
 	storage localstorage.Storage
+	cf      cipherfactory.Factory
 }
 
 // Get envelope type
@@ -25,7 +28,6 @@ func (e *envelopeHash) Validate() error {
 	if err != nil {
 		return err
 	}
-
 	defer r.Close()
 
 	t, err := utils.DeserializeInt(r)
@@ -37,7 +39,23 @@ func (e *envelopeHash) Validate() error {
 		return ErrInvalidEnvelopeType
 	}
 
-	panic("Unimplemented")
+	hasher, err := e.cf.CreateHasher()
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(hasher, r)
+	if err != nil {
+		return err
+	}
+
+	// BID must be equal to hash of the content
+	if hex.EncodeToString(r.Sum(nil)) != e.bid {
+		return ErrInvalidHashBID
+	}
+
+	// Ok, all done
+	return nil
 }
 
 // Get the BID for this envelope, this can be null in case
