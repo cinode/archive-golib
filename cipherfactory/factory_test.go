@@ -2,6 +2,7 @@ package cipherfactory
 
 import (
 	"bytes"
+	"crypto/rand"
 	"io"
 	"testing"
 )
@@ -78,7 +79,11 @@ func TestFactoryEncryptorDecryptorPair(t *testing.T) {
 		[]byte{47},
 		[]byte{13, 17},
 		[]byte{54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76},
+		make([]byte, 1089),
 	}
+
+	// Last entry in the set will be set to random data
+	rand.Read(testSet[len(testSet)-1])
 
 	for _, testData := range testSet {
 
