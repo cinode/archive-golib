@@ -8,6 +8,9 @@ import (
 // Interface for the provider of encryption primitives used in Cinode
 type Factory interface {
 
+	// Get minimum number of bytes in the key source
+	GetMinKeySourceBytes() int
+
 	// TODO: Shouldn't we operate on io.WriterCloser here ?
 	// Create io.Writer to encrypt data writter and save to provided writer,
 	// Parameters:
@@ -27,4 +30,9 @@ type Factory interface {
 
 	// Create default hasher
 	CreateHasher() (hasher hash.Hash, err error)
+}
+
+// Create default factory
+func Create() Factory {
+	return &defaultFactory{}
 }

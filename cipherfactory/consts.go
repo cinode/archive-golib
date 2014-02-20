@@ -1,6 +1,9 @@
 package cipherfactory
 
 const (
-	cipherAES256    = 0x01
-	cipherAES256Hex = "01"
+
+	// AES-256 cipher identification
+	cipherAES256                = 0x01
+	cipherAES256Hex             = "01"
+	cipherAES256KeySourceLength = 32
 )

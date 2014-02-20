@@ -19,24 +19,28 @@ var (
 type defaultFactory struct {
 }
 
+func (d *defaultFactory) GetMinKeySourceBytes() int {
+	return cipherAES256KeySourceLength
+}
+
 func (d *defaultFactory) CreateEncryptor(keySource, ivSource []byte, output io.Writer) (writer io.Writer, key string, err error) {
 
 	// Need at least 32 bytes of the key source
-	if len(keySource) < 32 {
+	if len(keySource) < cipherAES256KeySourceLength {
 		err = ErrInsufficientKeySource
 		return
 	}
 
 	// Create the iv
-	var iv [16]byte
+	var iv [aes.BlockSize]byte
 	for i, b := range ivSource {
 		iv[i] = b
-		if i >= 15 {
+		if i >= aes.BlockSize-1 {
 			break
 		}
 	}
 
-	keyRaw := keySource[:32]
+	keyRaw := keySource[:cipherAES256KeySourceLength]
 	key = cipherAES256Hex + hex.EncodeToString(keyRaw)
 
 	// Generate the encrypted content
@@ -71,15 +75,15 @@ func (d *defaultFactory) CreateDecryptor(key string, ivSource []byte, input io.R
 
 func (d *defaultFactory) createDecryptorAES256(key []byte, ivSource []byte, input io.Reader) (reader io.Reader, err error) {
 
-	if len(key) != 32 {
+	if len(key) != cipherAES256KeySourceLength {
 		return nil, ErrInvalidKey
 	}
 
 	// Normalize the iv
-	var iv [16]byte
+	var iv [aes.BlockSize]byte
 	for i, b := range ivSource {
 		iv[i] = b
-		if i >= 15 {
+		if i >= aes.BlockSize-1 {
 			break
 		}
 	}
@@ -101,10 +105,4 @@ func (d *defaultFactory) createDecryptorAES256(key []byte, ivSource []byte, inpu
 
 func (d *defaultFactory) CreateHasher() (hasher hash.Hash, err error) {
 	return sha512.New(), nil
-}
-
-func GetDefault() Factory {
-
-	return &defaultFactory{}
-
 }
