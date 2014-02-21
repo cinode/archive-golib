@@ -132,3 +132,27 @@ func TestFactoryEncryptorDecryptorPair(t *testing.T) {
 		}
 	}
 }
+
+func TestFactoryHasher(t *testing.T) {
+
+	f := Create()
+
+	h, err := f.CreateHasher()
+	if err != nil {
+		t.Fatalf("Couldn't create hasher: %v", err)
+	}
+	if h == nil {
+		t.Fatal("Did not get valid hasher")
+	}
+
+	h.Write([]byte{1, 2, 3, 4, 5, 6, 7, 8})
+	hash := h.Sum(nil)
+
+	if hash == nil {
+		t.Fatalf("Invalid hasher: didn't create hash sum")
+	}
+
+	if len(hash) < 16 {
+		t.Fatalf("Invalid size of generated hash, at least 16 bytes is required")
+	}
+}
