@@ -11,8 +11,10 @@ import (
 )
 
 var (
-	ErrDeserializeStringToLarge = errors.New("Could not deserialize string value due to invalid length")
-	ErrDeserializeStringNotUTF8 = errors.New("Could not deserialize string value - not a UTF-8 sequence")
+	ErrDeserializeIntegerOverflow     = errors.New("Couldn not deserialize integer value - overflow of a 64-bit value detected")
+	ErrDeserializeIntegerPaddingZeros = errors.New("Couldn not deserialize integer value - padding zeroes detected")
+	ErrDeserializeStringToLarge       = errors.New("Could not deserialize string value due to invalid length")
+	ErrDeserializeStringNotUTF8       = errors.New("Could not deserialize string value - not a UTF-8 sequence")
 )
 
 func SerializeInt(v uint64, w io.Writer) error {
@@ -55,23 +57,41 @@ func SerializeString(s string, w io.Writer) error {
 }
 
 func DeserializeInt(r io.Reader) (v uint64, err error) {
-	// TODO: Overflows
+
 	v, s := 0, uint(0)
 	buff := []byte{0}
+
 	for ; ; s += 7 {
+
+		// Early overflow detection
+		if s >= 64 {
+			return 0, ErrDeserializeIntegerOverflow
+		}
 
 		// Get next byte
 		if _, err = r.Read(buff); err != nil {
-			return
+			return 0, err
 		}
 
 		// Fill in the data in returned value
 		v |= uint64(buff[0]&0x7F) << s
 
+		// Overflow will cut some bits we won't be able to restore
+		if (v >> s) != uint64(buff[0]&0x7F) {
+			return 0, ErrDeserializeIntegerOverflow
+		}
+
+		// Highest bit in a byte means we shall continue
 		if (buff[0] & 0x80) == 0 {
 			break
 		}
 	}
+
+	// No padding zeros allowed
+	if ((buff[0] & 0x7F) == 0) && (s > 0) {
+		return 0, ErrDeserializeIntegerPaddingZeros
+	}
+
 	return
 }
 
