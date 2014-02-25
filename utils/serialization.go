@@ -11,15 +11,22 @@ import (
 )
 
 var (
-	ErrDeserializeIntegerOverflow     = errors.New("Couldn not deserialize integer value - overflow of a 64-bit value detected")
-	ErrDeserializeIntegerPaddingZeros = errors.New("Couldn not deserialize integer value - padding zeroes detected")
-	ErrDeserializeStringToLarge       = errors.New("Could not deserialize string value due to invalid length")
-	ErrDeserializeStringNotUTF8       = errors.New("Could not deserialize string value - not a UTF-8 sequence")
+	ErrIntegerOverflow     = errors.New("integer overflow")
+	ErrIntegerPaddingZeros = errors.New("padding zeroes are not allowed")
+	ErrBufferToLarge       = errors.New("buffer size is to large")
+	ErrStringToLarge       = errors.New("string length is to large")
+	ErrStringNotUTF8       = errors.New("buffer is not a valid utf-8 string")
 )
 
+const (
+	// 64-bit integer can be represented in 10 bytes, each representing 7 bits of the number
+	maxNumberBytes = 10
+)
+
+// SerializeInt serializes integer value into writer
 func SerializeInt(v uint64, w io.Writer) error {
 
-	buff := make([]byte, 0, 10)
+	buff := make([]byte, 0, maxNumberBytes)
 
 	for {
 		b := byte(v & 0x7F)
@@ -39,9 +46,15 @@ func SerializeInt(v uint64, w io.Writer) error {
 	return err
 }
 
-func SerializeBuffer(data []byte, w io.Writer) error {
+// SerializeBuffer serializes array of bytes into writer
+func SerializeBuffer(data []byte, w io.Writer, maxLength uint64) error {
 
-	if err := SerializeInt(uint64(len(data)), w); err != nil {
+	l := uint64(len(data))
+	if l > maxLength {
+		return ErrBufferToLarge
+	}
+
+	if err := SerializeInt(l, w); err != nil {
 		return err
 	}
 
@@ -52,24 +65,25 @@ func SerializeBuffer(data []byte, w io.Writer) error {
 	return nil
 }
 
-func SerializeString(s string, w io.Writer) error {
-	return SerializeBuffer([]byte(s), w)
+// SerializeString serializes string into writer
+func SerializeString(s string, w io.Writer, maxLength uint64) error {
+	return SerializeBuffer([]byte(s), w, maxLength)
 }
 
-func DeserializeInt(r io.Reader) (v uint64, err error) {
+// DeserializeInt tries to deserialize integer value from reader
+func DeserializeInt(r io.Reader) (uint64, error) {
 
-	v, s := 0, uint(0)
-	buff := []byte{0}
+	v, s, buff := uint64(0), uint(0), []byte{0}
 
 	for ; ; s += 7 {
 
 		// Early overflow detection
 		if s >= 64 {
-			return 0, ErrDeserializeIntegerOverflow
+			return 0, ErrIntegerOverflow
 		}
 
 		// Get next byte
-		if _, err = r.Read(buff); err != nil {
+		if _, err := r.Read(buff); err != nil {
 			return 0, err
 		}
 
@@ -78,7 +92,7 @@ func DeserializeInt(r io.Reader) (v uint64, err error) {
 
 		// Overflow will cut some bits we won't be able to restore
 		if (v >> s) != uint64(buff[0]&0x7F) {
-			return 0, ErrDeserializeIntegerOverflow
+			return 0, ErrIntegerOverflow
 		}
 
 		// Highest bit in a byte means we shall continue
@@ -89,39 +103,41 @@ func DeserializeInt(r io.Reader) (v uint64, err error) {
 
 	// No padding zeros allowed
 	if ((buff[0] & 0x7F) == 0) && (s > 0) {
-		return 0, ErrDeserializeIntegerPaddingZeros
+		return 0, ErrIntegerPaddingZeros
 	}
 
-	return
+	return v, nil
 }
 
-func DeserializeBuffer(r io.Reader, maxLength uint64) (data []byte, err error) {
+// DeserializeBuffer tries to deserialize buffer form reader
+func DeserializeBuffer(r io.Reader, maxLength uint64) ([]byte, error) {
 	length, err := DeserializeInt(r)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if (length < 0) || (length > maxLength) {
-		return nil, ErrDeserializeStringToLarge
+		return nil, ErrBufferToLarge
 	}
 
 	buffer := make([]byte, length)
 	if _, err = io.ReadFull(r, buffer); err != nil {
-		return
+		return nil, err
 	}
 
 	return buffer, nil
 }
 
-func DeserializeString(r io.Reader, maxLength uint64) (s string, err error) {
+// DeserializeString tries to deserialize string from reader
+func DeserializeString(r io.Reader, maxLength uint64) (string, error) {
 
 	buffer, err := DeserializeBuffer(r, maxLength)
 	if err != nil {
-		return
+		return "", err
 	}
 
 	if !utf8.Valid(buffer) {
-		return "", ErrDeserializeStringNotUTF8
+		return "", ErrStringNotUTF8
 	}
 
 	return string(buffer), nil
