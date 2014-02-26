@@ -6,6 +6,18 @@ import (
 	"testing"
 )
 
+func hexDump(data []byte) string {
+	if data == nil {
+		return "nil"
+	}
+
+	if len(data) > 8 {
+		return hex.EncodeToString(data[:8]) + "..."
+	}
+
+	return hex.EncodeToString(data)
+}
+
 var intSerializationData = []struct {
 	value      uint64
 	serialized []byte
@@ -38,8 +50,8 @@ func TestIntSerialization(t *testing.T) {
 			t.Fatalf(
 				"Serialization of value %v failed, data not equal (%v vs %v)",
 				tst.value,
-				hex.EncodeToString(s),
-				hex.EncodeToString(tst.serialized))
+				hexDump(s),
+				hexDump(tst.serialized))
 			continue
 		}
 
@@ -82,7 +94,7 @@ var intDeserializationData = []struct {
 	{[]byte{0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x02}, 0, true},
 }
 
-func TestIntDesrialization(t *testing.T) {
+func TestIntDeserialization(t *testing.T) {
 
 	for _, tst := range intDeserializationData {
 
@@ -96,7 +108,7 @@ func TestIntDesrialization(t *testing.T) {
 		}
 
 		if err != nil {
-			t.Errorf("Couldn not deserialize data, expected value: %v, got error: %v", tst.value, err)
+			t.Errorf("Could not deserialize data, expected value: %v, got error: %v", tst.value, err)
 			continue
 		}
 
@@ -104,4 +116,103 @@ func TestIntDesrialization(t *testing.T) {
 			t.Errorf("Mismatch of deserialized value: %v, should be: %v", v, tst.value)
 		}
 	}
+}
+
+var bufferSerializationData = []struct {
+	value      []byte
+	serialized []byte
+	err        error
+	maxLength  uint64
+}{
+	{[]byte{}, []byte{0}, nil, 0},
+	{[]byte{0}, []byte{1, 0}, nil, 1},
+	{[]byte{0}, nil, ErrBufferToLarge, 0},
+	{[]byte{7, 13}, []byte{2, 7, 13}, nil, 2},
+	{[]byte{7, 13}, nil, ErrBufferToLarge, 1},
+	{[]byte{7, 13}, nil, ErrBufferToLarge, 0},
+}
+
+func TestBufferSerialization(t *testing.T) {
+
+	for _, tst := range bufferSerializationData {
+
+		var b bytes.Buffer
+
+		err := SerializeBuffer(tst.value, &b, tst.maxLength)
+
+		if tst.err != nil {
+
+			if err == nil {
+				t.Errorf("Was able to serialize buffer but expected error")
+				continue
+			}
+
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("Could not serialize buffer: %v", err)
+			continue
+		}
+
+		if !bytes.Equal(b.Bytes(), tst.serialized) {
+			t.Errorf("Serialized buffer value is incorrect, expected: %v, is: %v", hexDump(tst.serialized), hexDump(b.Bytes()))
+			continue
+		}
+
+		v2, err := DeserializeBuffer(&b, tst.maxLength)
+		if err != nil {
+			t.Errorf("Unexpected deserialization error: %v", err)
+			continue
+		}
+
+		if !bytes.Equal(v2, tst.value) {
+			t.Errorf("Buffer value after deserialization is invalid, expected: %v, is: %v", hexDump(tst.value), v2)
+			continue
+		}
+	}
+}
+
+var bufferDeserializationData = []struct {
+	serialized []byte
+	value      []byte
+	err        error
+	maxLength  uint64
+}{
+	{[]byte{0}, []byte{}, nil, 0},
+	{[]byte{1, 0}, []byte{0}, nil, 1},
+	{[]byte{1, 0}, nil, ErrBufferToLarge, 0},
+	{[]byte{2, 7, 13}, []byte{7, 13}, nil, 2},
+	{[]byte{2, 7, 13}, nil, ErrBufferToLarge, 1},
+	{[]byte{2, 7, 13}, nil, ErrBufferToLarge, 0},
+}
+
+func TestBufferDeserialization(t *testing.T) {
+
+	for _, tst := range bufferDeserializationData {
+
+		v, err := DeserializeBuffer(bytes.NewBuffer(tst.serialized), tst.maxLength)
+
+		if tst.err != nil {
+
+			if err == nil {
+				t.Errorf("Was able to serialize buffer but expected error")
+				continue
+			}
+
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("Could not deserialize buffer: %v", err)
+			continue
+		}
+
+		if !bytes.Equal(v, tst.value) {
+			t.Errorf("Buffer value after deserialization is invalid, expected: %v, is: %v", hexDump(tst.value), v)
+			continue
+		}
+
+	}
+
 }
