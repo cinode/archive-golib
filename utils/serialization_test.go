@@ -209,7 +209,109 @@ func TestBufferDeserialization(t *testing.T) {
 		}
 
 		if !bytes.Equal(v, tst.value) {
-			t.Errorf("Buffer value after deserialization is invalid, expected: %v, is: %v", hexDump(tst.value), v)
+			t.Errorf("Buffer value after deserialization is invalid, expected: %v, is: %v", hexDump(tst.value), hexDump(v))
+			continue
+		}
+
+	}
+
+}
+
+var stringSerializationData = []struct {
+	value      string
+	serialized []byte
+	err        error
+	maxLength  uint64
+}{
+	{"", []byte{0}, nil, 0},
+	{"a", []byte{1, 'a'}, nil, 1},
+	{"a", nil, ErrBufferToLarge, 0},
+	{"abc", []byte{3, 'a', 'b', 'c'}, nil, 3},
+	{"abc", nil, ErrBufferToLarge, 2},
+	{"abc", nil, ErrBufferToLarge, 1},
+	{"abc", nil, ErrBufferToLarge, 0},
+	{"\u2318", []byte{3, 0xe2, 0x8c, 0x98}, nil, 3},
+}
+
+func TestStringSerialization(t *testing.T) {
+
+	for _, tst := range stringSerializationData {
+
+		var b bytes.Buffer
+
+		err := SerializeString(tst.value, &b, tst.maxLength)
+
+		if tst.err != nil {
+
+			if err == nil {
+				t.Errorf("Was able to serialize string but expected error")
+				continue
+			}
+
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("Could not serialize string: %v", err)
+			continue
+		}
+
+		if !bytes.Equal(b.Bytes(), tst.serialized) {
+			t.Errorf("Serialized string value is incorrect, expected: %v, is: %v", hexDump(tst.serialized), hexDump(b.Bytes()))
+			continue
+		}
+
+		v2, err := DeserializeString(&b, tst.maxLength)
+		if err != nil {
+			t.Errorf("Unexpected deserialization error: %v", err)
+			continue
+		}
+
+		if v2 != tst.value {
+			t.Errorf("String value after deserialization is invalid, expected: %v, is: %v", tst.value, v2)
+			continue
+		}
+	}
+}
+
+var stringDeserializationData = []struct {
+	serialized []byte
+	value      string
+	err        error
+	maxLength  uint64
+}{
+	{[]byte{0}, "", nil, 0},
+	{[]byte{1, 'a'}, "a", nil, 1},
+	{[]byte{1, 'a'}, "", ErrBufferToLarge, 0},
+	{[]byte{2, 'a', 'b'}, "ab", nil, 2},
+	{[]byte{2, 'a', 'b'}, "", ErrBufferToLarge, 1},
+	{[]byte{2, 'a', 'b'}, "", ErrBufferToLarge, 0},
+	{[]byte{2, 0x80, 'a'}, "", ErrStringNotUTF8, 2},
+}
+
+func TestStrigDeserialization(t *testing.T) {
+
+	for _, tst := range stringDeserializationData {
+
+		v, err := DeserializeString(bytes.NewBuffer(tst.serialized), tst.maxLength)
+
+		if tst.err != nil {
+
+			if err == nil {
+				t.Errorf("Was able to serialize string but expected error")
+				continue
+			}
+
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("Could not deserialize string: %v", err)
+			continue
+		}
+
+		if v != tst.value {
+			t.Errorf("String value after deserialization is invalid, expected: %v, is: %v", tst.value, v)
 			continue
 		}
 
