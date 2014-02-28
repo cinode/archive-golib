@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/hex"
+	"io"
 	"testing"
 )
 
@@ -92,6 +93,7 @@ var intDeserializationData = []struct {
 	{[]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00}, 0, true},
 	{[]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x02}, 0, true},
 	{[]byte{0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x02}, 0, true},
+	{[]byte{0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x2}, 0, true},
 }
 
 func TestIntDeserialization(t *testing.T) {
@@ -185,6 +187,9 @@ var bufferDeserializationData = []struct {
 	{[]byte{2, 7, 13}, []byte{7, 13}, nil, 2},
 	{[]byte{2, 7, 13}, nil, ErrBufferToLarge, 1},
 	{[]byte{2, 7, 13}, nil, ErrBufferToLarge, 0},
+	{[]byte{0x80}, nil, io.EOF, 10},
+	{[]byte{1}, nil, io.EOF, 10},
+	{[]byte{2, 0}, nil, io.EOF, 10},
 }
 
 func TestBufferDeserialization(t *testing.T) {
@@ -315,6 +320,38 @@ func TestStrigDeserialization(t *testing.T) {
 			continue
 		}
 
+	}
+
+}
+
+type faultyWriter struct {
+	writeBytesLeft int
+}
+
+func (w *faultyWriter) Write(buff []byte) (n int, err error) {
+
+	written := len(buff)
+
+	if w.writeBytesLeft < written {
+		written, w.writeBytesLeft = w.writeBytesLeft, 0
+		return written, io.EOF
+	}
+
+	w.writeBytesLeft -= written
+	return written, nil
+
+}
+
+func TestFailBufferWrite(t *testing.T) {
+
+	err := SerializeBuffer([]byte{0}, &faultyWriter{0}, 1000)
+	if err != io.EOF {
+		t.Errorf("Did not get EOF error when trying to save buffer")
+	}
+
+	err = SerializeBuffer([]byte{1, 2, 3, 4, 5, 6, 7}, &faultyWriter{5}, 1000)
+	if err != io.EOF {
+		t.Errorf("Did not get EOF error when trying to save buffer")
 	}
 
 }
