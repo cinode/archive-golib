@@ -45,6 +45,33 @@ func TestFactoryEncryptorCreation(t *testing.T) {
 	}
 }
 
+func TestFactoryKeyLengthReuqirement(t *testing.T) {
+
+	f := Create()
+
+	for l := range []byte{0, 1, byte(f.GetMinKeySourceBytes() - 1)} {
+		_, _, err := f.CreateEncryptor(make([]byte, l), make([]byte, 0), &bytes.Buffer{})
+		if err != ErrInsufficientKeySource {
+			t.Errorf("Did not get proper error about insufficient key source data size, key length: %v", l)
+		}
+	}
+
+}
+
+func TestFactoryIVLength(t *testing.T) {
+
+	f := Create()
+	key := make([]byte, f.GetMinKeySourceBytes())
+
+	for l := range []byte{0, 1, 3, 8, 16, 32, 64, 28} {
+		_, _, err := f.CreateEncryptor(key, make([]byte, l), &bytes.Buffer{})
+		if err != nil {
+			t.Errorf("Error for IV size: %v", l)
+		}
+	}
+
+}
+
 func TestFactoryEncryptorCreationFailure(t *testing.T) {
 
 	f := Create()
@@ -131,6 +158,19 @@ func TestFactoryEncryptorDecryptorPair(t *testing.T) {
 			t.Fatal("Decryptor returned invalid data")
 		}
 	}
+}
+
+func TestFactoryFailDecryptor(t *testing.T) {
+
+	f := Create()
+
+	for _, ks := range []string{"", "a", "z", "FFABCDABCDABCDABCDABCDABCDABCDABCD", "010000000000000000"} {
+		_, err := f.CreateDecryptor(ks, make([]byte, 0), &bytes.Buffer{})
+		if err == nil {
+			t.Error("Could create decryptor although the key is invalid")
+		}
+	}
+
 }
 
 func TestFactoryHasher(t *testing.T) {

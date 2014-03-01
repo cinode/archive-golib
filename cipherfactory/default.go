@@ -33,13 +33,9 @@ func (d *defaultFactory) CreateEncryptor(keySource, ivSource []byte, output io.W
 
 	// Create the iv
 	var iv [aes.BlockSize]byte
-	for i, b := range ivSource {
-		iv[i] = b
-		if i >= aes.BlockSize-1 {
-			break
-		}
-	}
+	copy(iv[:], ivSource)
 
+	// Create AES-compatible key
 	keyRaw := keySource[:cipherAES256KeySourceLength]
 	key = cipherAES256Hex + hex.EncodeToString(keyRaw)
 
@@ -81,12 +77,7 @@ func (d *defaultFactory) createDecryptorAES256(key []byte, ivSource []byte, inpu
 
 	// Normalize the iv
 	var iv [aes.BlockSize]byte
-	for i, b := range ivSource {
-		iv[i] = b
-		if i >= aes.BlockSize-1 {
-			break
-		}
-	}
+	copy( iv[:], ivSource );
 
 	// Create new base cipher
 	blobCipher, err := aes.NewCipher(key)
