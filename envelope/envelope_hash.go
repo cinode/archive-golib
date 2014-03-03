@@ -16,7 +16,7 @@ type envelopeHash struct {
 
 // Get envelope type
 func (e *envelopeHash) GetType() int {
-	return EnvelopeTypeHash
+	return TypeHash
 }
 
 // Make sure the envelope is valid by analyzing the content in the
@@ -35,7 +35,7 @@ func (e *envelopeHash) Validate() error {
 		return err
 	}
 
-	if t != EnvelopeTypeHash {
+	if t != TypeHash {
 		return ErrInvalidEnvelopeType
 	}
 
@@ -80,12 +80,8 @@ func (e *envelopeHash) GetChunksCount() int {
 // Get chunk reader
 func (e *envelopeHash) GetChunkReader(chunkNumber int) (reader io.Reader, err error) {
 
-	if chunkNumber < 0 {
+	if chunkNumber < 0 || chunkNumber >= e.GetChunksCount() {
 		return nil, ErrInvalidChunkNumber
-	}
-
-	if e.bid == "" {
-		return nil, ErrUninitialized
 	}
 
 	panic("Unimplemented")
