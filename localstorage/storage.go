@@ -4,12 +4,12 @@
 
 package localstorage
 
-// An interface usefull for blob storage operations
+// Storage is an abstraction around local storage for blobs
 type Storage interface {
 
-	// Create new writer for blobs
-	GetBlobWriter() (writer Writer, err error)
-
-	// Create new reader for existing blob
+	// GetBlobReader creates new reader for existing blob or fails with an error
 	GetBlobReader(blobId string) (reader Reader, err error)
+
+	// GetBlobWriter creates a writer for new blob
+	GetBlobWriter() (writer Writer, err error)
 }
