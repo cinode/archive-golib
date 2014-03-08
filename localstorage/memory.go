@@ -56,5 +56,7 @@ func (w *memoryWriter) Write(b []byte) (n int, err error) {
 }
 
 func InMemory() Storage {
-	return &memory{make(map[string][]byte)}
+	return &memory{
+		blobs: make(map[string][]byte),
+	}
 }
